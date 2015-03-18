@@ -1,7 +1,6 @@
 var $ = function (selector) {
   var elements = [];
   var elementWithId, elementsWithTag, elementsWithClass = [];
-  var arr = [];
   var selectors = selector.split(/(?=#)|(?=\.)/);
 
   var addAllElementsFrom = function(array){
@@ -57,7 +56,7 @@ var $ = function (selector) {
     return selectors[i].slice(1);
   }
 
-  var pushElementWithId = function(){
+  var pushElementsWithId = function(){
     if (elementsWithTag){
       for (var i=0; i < elementsWithTag.length; i++){
         addElementsWithIdentical(elementWithId, elementsWithTag[i]);
@@ -86,7 +85,7 @@ var $ = function (selector) {
   }
 
   if (elementWithId){
-    pushElementWithId();
+    pushElementsWithId();
   } else {
     pushElementsWithClass();
   }
