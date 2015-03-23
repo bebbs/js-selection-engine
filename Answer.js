@@ -1,94 +1,51 @@
 var $ = function (selector) {
-  var elements = [];
-  var elementWithId, elementsWithTag, elementsWithClass = [];
-  var selectors = selector.split(/(?=#)|(?=\.)/);
-
-  var addAllElementsFrom = function(array){
-    for (var i=0; i < array.length; i++){
-      elements.push(array[i]);
-    }
-  }
-
-  var addElementsWithIdentical = function(id, tag){
-    id === tag ? elements.push(id) : elements = []
-  }
-
-  var addSameElements = function(tags, classes){
-    for (var i=0; i < tags.length; i++){
-      addClassElementsFor(tags, classes, i)
-    }
-  }
-
-  var addClassElementsFor = function(tags, classes, i) {
-    for (var n=0; n < classes.length; n++){
-      if (tags[i] === classes[n]){
-        elements.push(tags[i]);
-      }
-    }
-  }
-
-  var hasId = function(i){
-    return (selectors[i].indexOf('#') > -1);
-  }
-
-  var hasClass = function(i){
-    return (selectors[i].indexOf('.') > -1);
-  }
-
-  var getDomElementWithId = function(i){
-    idSel = getDomElement(i);
-    elementWithId = document.getElementById(idSel);
-  }
-
-  var getDomElementsWithClass = function(i){
-    classSel = getDomElement(i);
-    elementsByClass = document.getElementsByClassName(classSel);
-    elementsWithClass = [].slice.call(elementsByClass);
-  }
-
-  var getDomElementsWithTag = function(i){
-    tagSel = selectors[i];
-    elementsByTag = document.getElementsByTagName(tagSel);
-    elementsWithTag = [].slice.call(elementsByTag);
-  }
-
-  var getDomElement = function(i){
-    return selectors[i].slice(1);
-  }
-
-  var pushElementsWithId = function(){
-    if (elementsWithTag){
-      for (var i=0; i < elementsWithTag.length; i++){
-        addElementsWithIdentical(elementWithId, elementsWithTag[i]);
-      }
-    } else {
-      elements.push(elementWithId);
-    }
-  }
-
-  var pushElementsWithClass = function(){
-    if (elementsWithClass.length > 0){
-      elementsWithTag ? addSameElements(elementsWithTag, elementsWithClass) : addAllElementsFrom(elementsWithClass)
-    } else {
-      addAllElementsFrom(elementsWithTag)
-    }
-  }
-
-  for(var i=0; i < selectors.length; i++){
-    if (hasId(i)){
-      getDomElementWithId(i);
-    } else if (hasClass(i)){
-      getDomElementsWithClass(i);
-    } else {
-      getDomElementsWithTag(i);
-    }
-  }
-
-  if (elementWithId){
-    pushElementsWithId();
-  } else {
-    pushElementsWithClass();
-  }
-
-  return elements;
+  var selectors = selector.split(/(?=#)|(?=\.)/)
+  var pageElements = [].slice.call(document.body.children);
+  var elementSelector = new ElementSelector(pageElements, selectors);
+  return elementSelector.getMatchingElements();
 }
+
+function ElementSelector(elements, selectors) {
+  this.selector = new Object;
+  this.selectorTypes(selectors);
+  this.elements = elements;
+  this.arr = [];
+}
+
+ElementSelector.prototype.hasId = function(selector) {
+  return (selector[0] === '#');
+};
+
+ElementSelector.prototype.hasClass = function(selector) {
+  return (selector[0] === '.');
+}
+
+ElementSelector.prototype.selectorTypes = function(selectors) {
+  selectors.forEach((function(selector) {
+    if (!selector.match(/\W/)) this.selector.elementTag = selector.toUpperCase();
+    if (this.hasId(selector)) this.selector.elementId = selector.slice(1);
+    if (this.hasClass(selector)) this.selector.elementClass = selector.slice(1);
+  }).bind(this));
+};
+
+ElementSelector.prototype.pushIfTag = function(element) {
+  if (!this.selector.elementId && !this.selector.elementClass) {
+    this.arr.push(element);
+  }
+  this.pushIfClassOrId(element);
+};
+
+ElementSelector.prototype.pushIfClassOrId = function(element) {
+  if (this.selector.elementId = element.id) this.arr.push(element);
+  else if (this.selector.elementClass === element.className.split(' ')[0]) {
+    this.arr.push(element);
+  };
+};
+
+ElementSelector.prototype.getMatchingElements = function() {
+  this.elements.forEach((function(element) {
+    if (this.selector.elementTag === element.tagName) this.pushIfTag(element);
+    else if (!this.selector.elementTag) this.pushIfClassOrId(element);
+  }).bind(this));
+  return this.arr;
+};
